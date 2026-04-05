@@ -1,12 +1,11 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build_meta"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "crm-data-simulator"
 version = "0.1.0"
 description = "CRM Data Simulator for Round 1"
-readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi",
@@ -19,5 +18,6 @@ dependencies = [
 [project.scripts]
 server = "server.app:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["server"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["server*"]

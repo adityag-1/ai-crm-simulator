@@ -2,15 +2,14 @@ FROM python:3.10-slim
 
 WORKDIR /code
 
-# 1. Install system dependencies
+# 1. Install system tools
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# 2. Upgrade pip and install the BUILD BACKEND tools
-# This ensures hatchling is globally available before the project build starts
+# 2. Upgrade pip and install build tools
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir hatchling setuptools
 
-# 3. Install core application dependencies
+# 3. Install dependencies manually first to ensure they exist
 RUN pip install --no-cache-dir \
     fastapi \
     uvicorn \
@@ -18,12 +17,15 @@ RUN pip install --no-cache-dir \
     python-multipart \
     "openenv-core>=0.2.0"
 
-# 4. Copy all project files
+# 4. Copy project files
 COPY . .
 
-# 5. Install the project in editable mode
-# Since we installed hatchling in Step 2, this will now succeed
-RUN pip install --no-cache-dir -e .
+# 5. Install the project (NO '-e' flag)
+# This installs the code as a standard library in site-packages
+RUN pip install --no-cache-dir .
 
-# 6. Run the entry point defined in pyproject.toml
+# 6. Expose port
+EXPOSE 7860
+
+# 7. Run the entry point defined in pyproject.toml
 CMD ["server"]

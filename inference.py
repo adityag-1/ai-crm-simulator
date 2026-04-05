@@ -1,65 +1,30 @@
 import os
-import logging
-from openai import OpenAI
+from huggingface_hub import InferenceClient
 
-# Ensuring output is clean for the grader to parse
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+# Get configuration from Space Variables/Secrets
+model_name = os.getenv("MODEL_NAME", "meta-llama/Meta-Llama-3-70B-Instruct")
+api_token = os.getenv("HF_TOKEN")
 
-def run_inference(prompt):
+client = InferenceClient(model=model_name, token=api_token)
+
+def clean_data(dirty_text):
     """
-    Standardized inference engine for OpenEnv Round 1.
-    Uses OpenAI Client and structured logging [START], [STEP], [END].
+    Sends dirty CRM text to Llama-3 and returns a cleaned version.
     """
-    # [START] - Required by openenv gate
-    print("[START]")
-    
-    # Task 4: Environment Variable Wiring
-    api_key = os.getenv("HF_TOKEN")
-    base_url = os.getenv("API_BASE_URL")
-    model_name = os.getenv("MODEL_NAME")
-
-    # Guard clause for missing configuration
-    if not api_key or not base_url:
-        print("[STEP] Error: Missing environment variables (HF_TOKEN or API_BASE_URL)")
-        print("[END]")
-        return None
-
-    # Initialize the compliant OpenAI Client
-    client = OpenAI(
-        base_url=base_url,
-        api_key=api_key
+    system_instructions = (
+        "You are a CRM Data Cleansing assistant. "
+        "Tasks: 1. Remove all HTML tags. 2. Format dates to YYYY-MM-DD. "
+        "3. Standardize phone numbers to +1XXXXXXXXXX format. "
+        "Return ONLY the cleaned string, no explanations."
     )
-
+    
     try:
-        print(f"[STEP] Sending request to model: {model_name}")
-        
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": "You are a professional CRM Data Auditor. Return only cleaned data or specific flags."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0, # Deterministic for grading consistency
-            max_tokens=500
+        response = client.text_generation(
+            prompt=f"{system_instructions}\n\nDirty Data: {dirty_text}\nCleaned Data:",
+            max_new_tokens=150,
+            temperature=0.1 # Low temperature for consistent formatting
         )
-        
-        output = response.choices[0].message.content
-        
-        # [STEP] - Process and display the raw output for the grader
-        print("[STEP] Inference complete. Resulting data:")
-        print(output)
-        
-        return output
-
+        return response.strip()
     except Exception as e:
-        print(f"[STEP] Critical failure: {str(e)}")
-        return None
-        
-    finally:
-        # [END] - Required by openenv gate
-        print("[END]")
-
-if __name__ == "__main__":
-    # Test execution
-    sample_data = "raw_input: 'mArY sMiTh, mary.s@gmial.com, 555-0192'"
-    run_inference(f"Clean and format this CRM record: {sample_data}")
+        print(f"Inference Error: {e}")
+        return dirty_text # Fallback to original if AI fails

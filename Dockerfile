@@ -1,16 +1,12 @@
-FROM python:3.10
+FROM python:3.10-slim
 
 WORKDIR /code
 
-# Copy requirements first
-COPY ./requirements.txt /code/requirements.txt
+# Install ONLY the necessary libraries via pip
+RUN pip install --no-cache-dir fastapi uvicorn huggingface_hub python-multipart "openenv-core>=0.2.0"
 
-# Install dependencies from the list
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-
-# Copy everything else
+# Copy your code
 COPY . .
 
-# IMPORTANT: No "pip install ." here to avoid build errors
-# Just start the server directly
-CMD ["python", "main.py"]
+# Start the server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]

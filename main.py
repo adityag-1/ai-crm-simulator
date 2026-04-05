@@ -1,52 +1,55 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from inference import clean_data
 import uvicorn
+import asyncio
 
 app = FastAPI()
 
-# --- STEP 1: THE HOME ROUTE ---
 @app.get("/")
 async def root():
-    return {
-        "status": "online",
-        "project": "CRM Spec Compliance",
-        "round": 1
-    }
+    return {"status": "online", "project": "CRM Spec Compliance", "round": 1}
 
-# --- STEP 2: THE HEALTH CHECK ---
-# The validator calls this first to see if the server is "alive"
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
 
-# --- STEP 3: THE RESET ROUTE (Fixes your specific error) ---
-# The validator calls this to clear the simulator before starting
 @app.post("/reset")
 async def reset_simulator():
-    return {
-        "status": "success", 
-        "message": "Simulator state has been reset for evaluation"
-    }
+    return {"status": "success", "message": "Simulator reset"}
 
-# --- STEP 4: THE PROCESS ROUTE ---
-# This is where the actual CRM data cleaning happens
 @app.post("/process")
 async def process_data(request: Request):
     try:
-        data = await request.json()
-        # Your logic to call inference.py would go here
-        # For now, we return a success to ensure the connection works
+        # 1. The validator sends a JSON object, usually with a key like 'records'
+        payload = await request.json()
+        
+        # Determine if input is a list or a single object
+        records = payload.get("records", []) if isinstance(payload, dict) else payload
+        
+        if not isinstance(records, list):
+            records = [records]
+
+        # 2. Process each record through the inference logic
+        # We use a loop to clean each item
+        cleaned_records = []
+        for item in records:
+            # If item is a dict, convert to string for the LLM
+            input_text = str(item)
+            cleaned_text = clean_data(input_text)
+            cleaned_records.append(cleaned_text)
+
+        # 3. Return the exact structure 'openenv validate' expects
         return {
             "status": "success",
-            "processed_count": len(data) if isinstance(data, list) else 1,
-            "message": "Data received and processing started"
+            "data": cleaned_records
         }
+
     except Exception as e:
         return JSONResponse(
-            status_code=400,
+            status_code=500,
             content={"status": "error", "message": str(e)}
         )
 
 if __name__ == "__main__":
-    # Hugging Face Spaces always use port 7860
     uvicorn.run(app, host="0.0.0.0", port=7860)

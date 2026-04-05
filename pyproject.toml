@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crm-data-simulator"
+version = "0.1.0"
+description = "CRM Data Simulator for Round 1 Spec Compliance"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "huggingface_hub",
+    "python-multipart"
+]
+
+[tool.setuptools]
+packages = ["."]

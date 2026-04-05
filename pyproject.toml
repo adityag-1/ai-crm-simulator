@@ -5,7 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "crm-data-simulator"
 version = "0.1.0"
-description = "CRM Data Simulator for Round 1"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi",
@@ -18,6 +17,9 @@ dependencies = [
 [project.scripts]
 server = "server.app:main"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["server*"]
+[tool.setuptools]
+packages = ["server"]
+py-modules = ["inference"]
+
+[tool.setuptools.package-data]
+"*" = ["*.py"]

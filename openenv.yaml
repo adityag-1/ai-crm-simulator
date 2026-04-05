@@ -1,0 +1,25 @@
+version: "1.0"
+metadata:
+  name: "crm-data-cleaner-env"
+  description: "Environment for cleaning and validating CRM data entries"
+  category: "data-processing"
+
+runtime:
+  port: 7860
+  entrypoint: "python main.py"
+
+required_env:
+  - API_BASE_URL
+  - MODEL_NAME
+  - HF_TOKEN
+
+tasks:
+  - id: "task_easy"
+    difficulty: "easy"
+    description: "Standardize casing for names and emails."
+  - id: "task_medium"
+    difficulty: "medium"
+    description: "Identify and flag duplicate entries with minor typos."
+  - id: "task_hard"
+    difficulty: "hard"
+    description: "Reconstruct missing phone formats and cross-reference records."

@@ -11,6 +11,7 @@ dependencies = [
     "uvicorn",
     "huggingface_hub",
     "python-multipart",
+    "openai",
     "openenv-core>=0.2.0"
 ]
 

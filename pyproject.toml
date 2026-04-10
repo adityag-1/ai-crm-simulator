@@ -3,14 +3,13 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "crm-data-simulator"
+name = "openenv-submission"
 version = "0.2.0"
-requires-python = ">=3.10"
 dependencies = [
     "fastapi",
     "uvicorn",
     "openai",
-    "python-multipart"
+    "openenv-core>=0.2.0"
 ]
 
 [project.scripts]

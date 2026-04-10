@@ -1,31 +1,27 @@
 FROM python:3.10-slim
 
-# Prevent Python from buffering stdout/stderr (essential for validator logs)
 ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
-# 1. Install minimal system tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git && rm -rf /var/lib/apt/lists/*
+# Install dependencies
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 2. Setup environment and install dependencies
+# Copy configuration first
 COPY pyproject.toml .
-# Create a dummy lock file if it doesn't exist to satisfy validator checks
 RUN touch uv.lock
 
-# 3. Install build tools and dependencies
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir fastapi uvicorn openai python-multipart
+# Pre-install core libs to speed up build and ensure they exist
+RUN pip install --no-cache-dir fastapi uvicorn openai openenv-core
 
-# 4. Copy the rest of the code
+# Copy source code
 COPY inference.py .
 COPY server/ ./server/
 
-# 5. Install the project in editable mode or standard
+# Install the project as a package
 RUN pip install --no-cache-dir -e .
 
-# 6. OpenEnv port
 EXPOSE 7860
 
-# 7. Start the server via the entry point
+# Execute the entry point defined in toml
 CMD ["server"]

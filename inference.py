@@ -1,33 +1,22 @@
 import os
-import sys
 from openai import OpenAI
 
-def clean_data(dirty_text):
-    # Fetch environment variables injected by OpenEnv
-    api_base = os.getenv("API_BASE_URL")
+def process_task(input_data):
+    # 1. Fetch the injected environment variables
     api_key = os.getenv("API_KEY")
-    model_name = os.getenv("MODEL_NAME", "gpt-4o") # Use provided model or default
+    base_url = os.getenv("API_BASE_URL")
 
-    if not api_key or not api_base:
-        return f"MISSING_CONFIG: {dirty_text}"
+    # 2. Initialize the client using the PROXY variables
+    # This is the CRITICAL part for the "Task Validation" check
+    client = OpenAI(
+        base_url=base_url,
+        api_key=api_key
+    )
 
-    # Initialize client inside the function to ensure it uses the latest env vars
-    client = OpenAI(base_url=api_base, api_key=api_key)
-
-    try:
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": "Clean the CRM data. Output ONLY the result."},
-                {"role": "user", "content": dirty_text}
-            ]
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        print(f"Proxy Error: {e}", file=sys.stderr)
-        return dirty_text
-
-if __name__ == "__main__":
-    # Required for the 'inference.py Execution' check
-    print("[START] task=logic_test", flush=True)
-    print("[END] task=logic_test score=1.0 steps=1", flush=True)
+    # 3. Make the call (ensure you're using a model name allowed by OpenEnv)
+    response = client.chat.completions.create(
+        model="gpt-4o-mini", # or the specific model required for Phase 2
+        messages=[{"role": "user", "content": input_data}]
+    )
+    
+    return response.choices[0].message.content
